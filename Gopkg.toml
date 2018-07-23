@@ -34,6 +34,14 @@ required = [
   version = "v8.0.0"
 
 [[constraint]]
+  name = "github.com/shurcooL/githubv4"
+  branch = "master"
+
+[[override]]
+  name = "github.com/shurcooL/graphql"
+  branch = "master"
+
+[[constraint]]
   name = "github.com/docker/docker"
   # https://github.com/docker/docker-ce/blob/17.12/components/cli/vendor.conf
   # to update this check https://github.com/docker/docker-ce/blob/<tag>/components/cli/vendor.conf 

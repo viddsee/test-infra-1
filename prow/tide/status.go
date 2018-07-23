@@ -28,7 +28,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/shurcooL/githubql"
+	"github.com/shurcooL/githubv4"
 	"github.com/sirupsen/logrus"
 
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -264,7 +264,7 @@ func (sc *statusController) setStatuses(all []PullRequest, pool map[string]PullR
 		}
 
 		wantState, wantDesc := expectedStatus(queryMap, pr, pool, cr)
-		var actualState githubql.StatusState
+		var actualState githubv4.StatusState
 		var actualDesc string
 		for _, ctx := range contexts {
 			if string(ctx.Context) == statusContext {

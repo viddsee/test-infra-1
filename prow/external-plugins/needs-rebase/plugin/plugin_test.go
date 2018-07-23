@@ -25,7 +25,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/shurcooL/githubql"
+	"github.com/shurcooL/githubv4"
 	"github.com/sirupsen/logrus"
 
 	"k8s.io/test-infra/prow/github"
@@ -233,18 +233,18 @@ func TestHandleAll(t *testing.T) {
 	prs := []pullRequest{}
 	for i, testPR := range testPRs {
 		pr := pullRequest{
-			Number: githubql.Int(i),
+			Number: githubv4.Int(i),
 		}
 		if testPR.mergeable {
-			pr.Mergeable = githubql.MergeableStateMergeable
+			pr.Mergeable = githubv4.MergeableStateMergeable
 		} else {
-			pr.Mergeable = githubql.MergeableStateConflicting
+			pr.Mergeable = githubv4.MergeableStateConflicting
 		}
 		for _, label := range testPR.labels {
 			s := struct {
-				Name githubql.String
+				Name githubv4.String
 			}{
-				Name: githubql.String(label),
+				Name: githubv4.String(label),
 			}
 			pr.Labels.Nodes = append(pr.Labels.Nodes, s)
 		}

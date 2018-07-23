@@ -23,7 +23,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/shurcooL/githubql"
+	"github.com/shurcooL/githubv4"
 	"github.com/sirupsen/logrus"
 
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -134,8 +134,8 @@ func parseBranches(str string) []string {
 func search(ctx context.Context, ghc githubClient, log *logrus.Entry, q string) ([]Issue, error) {
 	var ret []Issue
 	vars := map[string]interface{}{
-		"query":        githubql.String(q),
-		"searchCursor": (*githubql.String)(nil),
+		"query":        githubv4.String(q),
+		"searchCursor": (*githubv4.String)(nil),
 	}
 	var totalCost int
 	var remaining int
@@ -152,7 +152,7 @@ func search(ctx context.Context, ghc githubClient, log *logrus.Entry, q string) 
 		if !sq.Search.PageInfo.HasNextPage {
 			break
 		}
-		vars["searchCursor"] = githubql.NewString(sq.Search.PageInfo.EndCursor)
+		vars["searchCursor"] = githubv4.NewString(sq.Search.PageInfo.EndCursor)
 	}
 	log.Debugf("Search for query \"%s\" cost %d point(s). %d remaining.", q, totalCost, remaining)
 	return ret, nil
@@ -161,26 +161,26 @@ func search(ctx context.Context, ghc githubClient, log *logrus.Entry, q string) 
 // Issue holds graphql response data about issues
 // TODO: validate that fields are populated properly
 type Issue struct {
-	Number     githubql.Int
-	Title      githubql.String
-	HTMLURL    githubql.String
+	Number     githubv4.Int
+	Title      githubv4.String
+	HTMLURL    githubv4.String
 	Repository struct {
-		Name  githubql.String
+		Name  githubv4.String
 		Owner struct {
-			Login githubql.String
+			Login githubv4.String
 		}
 	}
 }
 
 type searchQuery struct {
 	RateLimit struct {
-		Cost      githubql.Int
-		Remaining githubql.Int
+		Cost      githubv4.Int
+		Remaining githubv4.Int
 	}
 	Search struct {
 		PageInfo struct {
-			HasNextPage githubql.Boolean
-			EndCursor   githubql.String
+			HasNextPage githubv4.Boolean
+			EndCursor   githubv4.String
 		}
 		Nodes []struct {
 			Issue Issue `graphql:"... on Issue"`

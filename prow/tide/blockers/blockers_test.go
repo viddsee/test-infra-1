@@ -22,7 +22,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/shurcooL/githubql"
+	"github.com/shurcooL/githubv4"
 
 	"k8s.io/apimachinery/pkg/util/sets"
 )
@@ -137,20 +137,20 @@ func TestBlockerQuery(t *testing.T) {
 
 func testIssue(number int, title, org, repo string) Issue {
 	return Issue{
-		Number:  githubql.Int(number),
-		Title:   githubql.String(title),
-		HTMLURL: githubql.String(strconv.Itoa(number)),
+		Number:  githubv4.Int(number),
+		Title:   githubv4.String(title),
+		HTMLURL: githubv4.String(strconv.Itoa(number)),
 		Repository: struct {
-			Name  githubql.String
+			Name  githubv4.String
 			Owner struct {
-				Login githubql.String
+				Login githubv4.String
 			}
 		}{
-			Name: githubql.String(repo),
+			Name: githubv4.String(repo),
 			Owner: struct {
-				Login githubql.String
+				Login githubv4.String
 			}{
-				Login: githubql.String(org),
+				Login: githubv4.String(org),
 			},
 		},
 	}
