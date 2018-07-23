@@ -845,7 +845,7 @@
   revision = "a83829b6f1293c91addabc89d0571c246397bbf4"
 
 [[projects]]
-  branch = "release-1.10"
+  branch = "release-1.11"
   name = "k8s.io/api"
   packages = [
     "admissionregistration/v1alpha1",
@@ -877,7 +877,7 @@
     "storage/v1alpha1",
     "storage/v1beta1",
   ]
-  revision = "590a9173e3b65d74e907fcfd94b78465cf314760"
+  revision = "2d6f90ab1293a1fb871cf149423ebb72aa7423aa"
 
 [[projects]]
   branch = "master"
@@ -892,7 +892,7 @@
   revision = "e4d9f6c01342df2d731be47146016a52d1a623ed"
 
 [[projects]]
-  branch = "release-1.10"
+  branch = "release-1.11"
   name = "k8s.io/apimachinery"
   packages = [
     "pkg/api/equality",
@@ -935,13 +935,13 @@
     "pkg/watch",
     "third_party/forked/golang/reflect",
   ]
-  revision = "01bc873149a1802eb74df583613872d126449ed5"
+  revision = "103fd098999dc9c0c88536f5c9ad2e5da39373ae"
 
 [[projects]]
-  branch = "release-1.10"
+  branch = "release-1.11"
   name = "k8s.io/apiserver"
   packages = ["pkg/util/flag"]
-  revision = "0841753fc26e934b715ca7a83dced5bcb721245a"
+  revision = "3de71bb5f22353b17e34d62670439f95c6948d11"
 
 [[projects]]
   name = "k8s.io/client-go"
