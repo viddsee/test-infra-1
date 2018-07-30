@@ -69,7 +69,7 @@ const (
 	// JenkinsAgent means prow will schedule the job on jenkins.
 	JenkinsAgent = "jenkins"
 	// BuildAgent means prow will schedule the job via a build-crd resource.
-	BuildAgent = "build-crd"
+	BuildAgent = "build"
 )
 
 const (
