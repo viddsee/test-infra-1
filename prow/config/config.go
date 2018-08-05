@@ -916,9 +916,9 @@ func validateAgent(name, agent string, spec *v1.PodSpec, config *kube.Decoration
 		}
 	}
 	// Ensure agent is a known value.
-	if agent != string(kube.KubernetesAgent) && agent != string(kube.JenkinsAgent) {
-		return fmt.Errorf("job %s has invalid agent (%s), it needs to be one of the following: %s %s",
-			name, agent, kube.KubernetesAgent, kube.JenkinsAgent)
+	if agent != string(kube.KubernetesAgent) && agent != string(kube.JenkinsAgent) && agent != string(kube.BuildAgent) {
+		return fmt.Errorf("job %s has invalid agent (%s), it needs to be one of the following: %s %s %s",
+			name, agent, kube.KubernetesAgent, kube.JenkinsAgent, kube.BuildAgent)
 	}
 	return nil
 }

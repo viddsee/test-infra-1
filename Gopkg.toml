@@ -59,6 +59,10 @@ required = [
   name = "k8s.io/code-generator"
   branch = "release-1.10"
 
+[[constraint]]
+  name = "github.com/knative/build"
+  branch = "master"
+
 [[override]]
   name = "k8s.io/client-go"
   version = "v7.0.0"

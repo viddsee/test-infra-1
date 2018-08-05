@@ -406,7 +406,7 @@ func prowJobStatus(bs buildv1alpha1.BuildStatus) (prowjobv1.ProwJobState, string
 		if !finished.IsZero() {
 			return prowjobv1.ErrorState, descMissingCondition
 		}
-		return prowjobv1.TriggeredState, descScheduling
+		return prowjobv1.PendingState, descScheduling
 	}
 	cond := *pcond
 	switch {

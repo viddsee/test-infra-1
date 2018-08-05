@@ -528,6 +528,7 @@
   version = "v3.0.7"
 
 [[projects]]
+  branch = "master"
   name = "github.com/knative/build"
   packages = [
     "pkg/apis/build",
@@ -541,8 +542,7 @@
     "pkg/client/informers/externalversions/internalinterfaces",
     "pkg/client/listers/build/v1alpha1",
   ]
-  revision = "5c1d8c8469d1ed34b2aecf4c2305b3a57fff2ee3"
-  version = "v0.1.0"
+  revision = "db5262d0d5d6df73af3541ce44ac968f1ef14ecb"
 
 [[projects]]
   branch = "master"
@@ -1155,6 +1155,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "14e47ed967e5575e1415f795176f2b8e19a9a1f3015e2820b67cf14433ecddc1"
+  inputs-digest = "94c6beed599a2dc5882bb6106d24c700255c966a15c82164719738bbac0eaafd"
   solver-name = "gps-cdcl"
   solver-version = 1
