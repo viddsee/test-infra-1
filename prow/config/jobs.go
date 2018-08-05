@@ -25,6 +25,8 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/test-infra/prow/kube"
+
+	buildv1alpha1 "github.com/knative/build/pkg/apis/build/v1alpha1"
 )
 
 // Preset is intended to match the k8s' PodPreset feature, and may be removed
@@ -102,6 +104,8 @@ type Presubmit struct {
 	Cluster string `json:"cluster"`
 	// Kubernetes pod spec.
 	Spec *v1.PodSpec `json:"spec,omitempty"`
+	// knative build spec.
+	BuildSpec *buildv1alpha1.BuildSpec `json:"build_spec,omitempty"`
 	// Run these jobs after successfully running this one.
 	RunAfterSuccess []Presubmit `json:"run_after_success"`
 	// Consider job optional for branch protection.

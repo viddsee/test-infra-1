@@ -137,6 +137,13 @@ func PresubmitSpec(p config.Presubmit, refs kube.Refs) kube.ProwJobSpec {
 			pjs.Cluster = kube.DefaultClusterAlias
 		}
 	}
+	if pjs.Agent == kube.BuildAgent {
+		pjs.BuildSpec = p.BuildSpec
+		pjs.Cluster = p.Cluster
+		if pjs.Cluster == "" {
+			pjs.Cluster = kube.DefaultClusterAlias
+		}
+	}
 	for _, nextP := range p.RunAfterSuccess {
 		pjs.RunAfterSuccess = append(pjs.RunAfterSuccess, PresubmitSpec(nextP, refs))
 	}
