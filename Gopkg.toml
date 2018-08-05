@@ -37,6 +37,10 @@ required = [
   name = "github.com/shurcooL/githubv4"
   branch = "master"
 
+[[constraint]]
+  name = "github.com/knative/build"
+  branch = "master"
+
 [[override]]
   name = "github.com/shurcooL/graphql"
   branch = "master"

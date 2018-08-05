@@ -64,9 +64,11 @@ const (
 
 const (
 	// KubernetesAgent means prow will create a pod to run this job.
-	KubernetesAgent ProwJobAgent = "kubernetes"
+	KubernetesAgent = v1.KubernetesAgent
 	// JenkinsAgent means prow will schedule the job on jenkins.
-	JenkinsAgent = "jenkins"
+	JenkinsAgent = v1.JenkinsAgent
+	// BuildAgent means a knative build controller will perform the build steps for the job.
+	BuildAgent = v1.BuildAgent
 )
 
 const (
