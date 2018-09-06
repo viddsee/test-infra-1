@@ -30,6 +30,8 @@ import (
 	"k8s.io/test-infra/prow/config"
 	"k8s.io/test-infra/prow/github"
 	"k8s.io/test-infra/prow/kube"
+	"k8s.io/api/core/v1"
+	"k8s.io/test-infra/bazel-test-infra/external/go_sdk/src/fmt"
 )
 
 const (
@@ -38,8 +40,32 @@ const (
 	orgLabel     = "prow.k8s.io/refs.org"
 	repoLabel    = "prow.k8s.io/refs.repo"
 	pullLabel    = "prow.k8s.io/refs.pull"
-)
 
+
+	// JobSpecEnv is the name that contains JobSpec marshaled into a string.
+	JobSpecEnv = "JOB_SPEC"
+
+	jobNameEnv   = "JOB_NAME"
+	jobTypeEnv   = "JOB_TYPE"
+	prowJobIDEnv = "PROW_JOB_ID"
+
+	buildIDEnv        = "BUILD_ID"
+	prowBuildIDEnv    = "BUILD_NUMBER" // Deprecated, will be removed in the future.
+	jenkinsBuildIDEnv = "buildId"      // Deprecated, will be removed in the future.
+
+	repoOwnerEnv   = "REPO_OWNER"
+	repoNameEnv    = "REPO_NAME"
+	pullBaseRefEnv = "PULL_BASE_REF"
+	pullBaseShaEnv = "PULL_BASE_SHA"
+	pullRefsEnv    = "PULL_REFS"
+	pullNumberEnv  = "PULL_NUMBER"
+	pullPullShaEnv = "PULL_PULL_SHA"
+	cloneURI 	   = "CLONE_URI"
+
+	// todo lets come up with better const names
+	jmbrBranchName = "BRANCH_NAME"
+	jmbrSourceURL  = "SOURCE_URL"
+)
 // NewProwJob initializes a ProwJob out of a ProwJobSpec.
 func NewProwJob(spec kube.ProwJobSpec, labels map[string]string) kube.ProwJob {
 	allLabels := map[string]string{
@@ -117,6 +143,7 @@ func NewPresubmit(pr github.PullRequest, baseSHA string, job config.Presubmit, e
 func PresubmitSpec(p config.Presubmit, refs kube.Refs) kube.ProwJobSpec {
 	refs.PathAlias = p.PathAlias
 	refs.CloneURI = p.CloneURI
+
 	pjs := kube.ProwJobSpec{
 		Type:      kube.PresubmitJob,
 		Job:       p.Name,
@@ -139,24 +166,71 @@ func PresubmitSpec(p config.Presubmit, refs kube.Refs) kube.ProwJobSpec {
 		}
 	}
 	if pjs.Agent == kube.BuildAgent {
+
 		pjs.BuildSpec = p.BuildSpec
 		pjs.Cluster = p.Cluster
+
 		if pjs.Cluster == "" {
 			pjs.Cluster = kube.DefaultClusterAlias
 		}
-
-		sourceSpec := buildv1alpha1.SourceSpec{Git: &buildv1alpha1.GitSourceSpec{Url:"https://github.com/" + refs.Org + "/" + refs.Repo + ".git"}}
-
-
-		pjs.BuildSpec.Source = &sourceSpec
-
-		//pjs.BuildSpec.Source.Git.Url = "https://github.com/" + refs.Org + "/" + refs.Repo + ".git"
-		pjs.BuildSpec.Source.Git.Revision = refs.Pulls[0].SHA
+		interpolateEnvVars(&pjs, refs)
 	}
 	for _, nextP := range p.RunAfterSuccess {
 		pjs.RunAfterSuccess = append(pjs.RunAfterSuccess, PresubmitSpec(nextP, refs))
 	}
 	return pjs
+}
+
+func interpolateEnvVars(pjs *kube.ProwJobSpec, refs kube.Refs) {
+	//todo lets clean this up
+	sourceURL := fmt.Sprintf("https://github.com/%s/%s.git",refs.Org,refs.Repo)
+	sourceSpec := buildv1alpha1.SourceSpec{Git: &buildv1alpha1.GitSourceSpec{Url:sourceURL}}
+
+	// todo taken from downwardapi.JobSpec, lets clean up the duplication
+	env := map[string]string{
+		jobNameEnv:   pjs.Job,
+		// TODO: figure out how to reliably get this even after pod restarts, we want the number to increase so maybe we
+		// TODO: need to think about using an external resource, kubernetes / git / some other to work out the next build #
+		//jmbrBuildNumber: "987654321",
+		//buildIDEnv:   buildID,
+		//prowJobIDEnv: spec.ProwJobID,
+		jobTypeEnv:   string(pjs.Type),
+	}
+
+	branchName := ""
+	if len(refs.Pulls) == 1 {
+		branchName = "PR-" + strconv.Itoa(refs.Pulls[0].Number)
+	}
+
+	// enrich with jenkins multi branch plugin env vars
+	env[jmbrBranchName] = branchName
+	env[jmbrSourceURL] = sourceURL
+
+	env[repoOwnerEnv] = refs.Org
+	env[repoNameEnv] = refs.Repo
+	env[pullBaseRefEnv] = refs.BaseRef
+	env[pullBaseShaEnv] = refs.BaseSHA
+	env[pullRefsEnv] = refs.String()
+	env[cloneURI] = refs.CloneURI
+
+	env[pullNumberEnv] = strconv.Itoa(refs.Pulls[0].Number)
+	env[pullPullShaEnv] = refs.Pulls[0].SHA
+
+	pjs.BuildSpec.Source = &sourceSpec
+	pjs.BuildSpec.Source.Git.Revision = refs.Pulls[0].SHA
+
+	for i, step := range pjs.BuildSpec.Steps {
+		if len(step.Env) == 0{
+			step.Env = []v1.EnvVar{}
+		}
+		for k, v := range env {
+			e := v1.EnvVar{
+				Name: k,
+				Value: v,
+			}
+			pjs.BuildSpec.Steps[i].Env = append(pjs.BuildSpec.Steps[i].Env, e)
+		}
+	}
 }
 
 // PostsubmitSpec initializes a ProwJobSpec for a given postsubmit job.
