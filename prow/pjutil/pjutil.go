@@ -31,7 +31,7 @@ import (
 	"k8s.io/test-infra/prow/github"
 	"k8s.io/test-infra/prow/kube"
 	"k8s.io/api/core/v1"
-	"k8s.io/test-infra/bazel-test-infra/external/go_sdk/src/fmt"
+	"fmt"
 )
 
 const (
