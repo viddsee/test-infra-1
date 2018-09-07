@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/shurcooL/githubql"
+	"github.com/shurcooL/githubv4"
 	"github.com/sirupsen/logrus"
 
 	"k8s.io/test-infra/prow/config"
@@ -114,7 +114,7 @@ func TestExpectedStatus(t *testing.T) {
 			name:      "only failed tide context",
 			labels:    neededLabels,
 			milestone: "v1.0",
-			contexts:  []Context{{Context: githubql.String(statusContext), State: githubql.StatusStateError}},
+			contexts:  []Context{{Context: githubv4.String(statusContext), State: githubv4.StatusStateError}},
 			inPool:    false,
 
 			state: github.StatusPending,
@@ -123,7 +123,7 @@ func TestExpectedStatus(t *testing.T) {
 		{
 			name:     "single bad context",
 			labels:   neededLabels,
-			contexts: []Context{{Context: githubql.String("job-name"), State: githubql.StatusStateError}},
+			contexts: []Context{{Context: githubv4.String("job-name"), State: githubv4.StatusStateError}},
 			inPool:   false,
 
 			state: github.StatusPending,
@@ -133,8 +133,8 @@ func TestExpectedStatus(t *testing.T) {
 			name:   "multiple bad contexts",
 			labels: neededLabels,
 			contexts: []Context{
-				{Context: githubql.String("job-name"), State: githubql.StatusStateError},
-				{Context: githubql.String("other-job-name"), State: githubql.StatusStateError},
+				{Context: githubv4.String("job-name"), State: githubv4.StatusStateError},
+				{Context: githubv4.String("other-job-name"), State: githubv4.StatusStateError},
 			},
 			inPool: false,
 
@@ -145,7 +145,7 @@ func TestExpectedStatus(t *testing.T) {
 			name:      "wrong milestone",
 			labels:    neededLabels,
 			milestone: "v1.1",
-			contexts:  []Context{{Context: githubql.String("job-name"), State: githubql.StatusStateSuccess}},
+			contexts:  []Context{{Context: githubv4.String("job-name"), State: githubv4.StatusStateSuccess}},
 			inPool:    false,
 
 			state: github.StatusPending,
@@ -155,7 +155,7 @@ func TestExpectedStatus(t *testing.T) {
 			name:      "unknown requirement",
 			labels:    neededLabels,
 			milestone: "v1.0",
-			contexts:  []Context{{Context: githubql.String("job-name"), State: githubql.StatusStateSuccess}},
+			contexts:  []Context{{Context: githubv4.String("job-name"), State: githubv4.StatusStateSuccess}},
 			inPool:    false,
 
 			state: github.StatusPending,
@@ -189,19 +189,19 @@ func TestExpectedStatus(t *testing.T) {
 		})
 		var pr PullRequest
 		pr.BaseRef = struct {
-			Name   githubql.String
-			Prefix githubql.String
+			Name   githubv4.String
+			Prefix githubv4.String
 		}{
-			Name: githubql.String(tc.baseref),
+			Name: githubv4.String(tc.baseref),
 		}
 		for _, label := range tc.labels {
 			pr.Labels.Nodes = append(
 				pr.Labels.Nodes,
-				struct{ Name githubql.String }{Name: githubql.String(label)},
+				struct{ Name githubv4.String }{Name: githubv4.String(label)},
 			)
 		}
 		if len(tc.contexts) > 0 {
-			pr.HeadRefOID = githubql.String("head")
+			pr.HeadRefOID = githubv4.String("head")
 			pr.Commits.Nodes = append(
 				pr.Commits.Nodes,
 				struct{ Commit Commit }{
@@ -209,15 +209,15 @@ func TestExpectedStatus(t *testing.T) {
 						Status: struct{ Contexts []Context }{
 							Contexts: tc.contexts,
 						},
-						OID: githubql.String("head"),
+						OID: githubv4.String("head"),
 					},
 				},
 			)
 		}
 		if tc.milestone != "" {
 			pr.Milestone = &struct {
-				Title githubql.String
-			}{githubql.String(tc.milestone)}
+				Title githubv4.String
+			}{githubv4.String(tc.milestone)}
 		}
 		var pool map[string]PullRequest
 		if tc.inPool {
@@ -241,7 +241,7 @@ func TestSetStatuses(t *testing.T) {
 
 		inPool     bool
 		hasContext bool
-		state      githubql.StatusState
+		state      githubv4.StatusState
 		desc       string
 
 		shouldSet bool
@@ -251,7 +251,7 @@ func TestSetStatuses(t *testing.T) {
 
 			inPool:     true,
 			hasContext: true,
-			state:      githubql.StatusStateSuccess,
+			state:      githubv4.StatusStateSuccess,
 			desc:       statusInPool,
 
 			shouldSet: false,
@@ -269,7 +269,7 @@ func TestSetStatuses(t *testing.T) {
 
 			inPool:     true,
 			hasContext: true,
-			state:      githubql.StatusStateSuccess,
+			state:      githubv4.StatusStateSuccess,
 			desc:       statusNotInPoolEmpty,
 
 			shouldSet: true,
@@ -279,7 +279,7 @@ func TestSetStatuses(t *testing.T) {
 
 			inPool:     true,
 			hasContext: true,
-			state:      githubql.StatusStatePending,
+			state:      githubv4.StatusStatePending,
 			desc:       statusInPool,
 
 			shouldSet: true,
@@ -289,7 +289,7 @@ func TestSetStatuses(t *testing.T) {
 
 			inPool:     false,
 			hasContext: true,
-			state:      githubql.StatusStatePending,
+			state:      githubv4.StatusStatePending,
 			desc:       statusNotInPoolEmpty,
 
 			shouldSet: false,
@@ -299,7 +299,7 @@ func TestSetStatuses(t *testing.T) {
 
 			inPool:     false,
 			hasContext: true,
-			state:      githubql.StatusStatePending,
+			state:      githubv4.StatusStatePending,
 			desc:       statusInPool,
 
 			shouldSet: true,
@@ -319,9 +319,9 @@ func TestSetStatuses(t *testing.T) {
 		if tc.hasContext {
 			pr.Commits.Nodes[0].Commit.Status.Contexts = []Context{
 				{
-					Context:     githubql.String(statusContext),
+					Context:     githubv4.String(statusContext),
 					State:       tc.state,
-					Description: githubql.String(tc.desc),
+					Description: githubv4.String(tc.desc),
 				},
 			}
 		}
@@ -385,15 +385,15 @@ func TestTargetUrl(t *testing.T) {
 			name: "PR dashboard config",
 			pr: &PullRequest{
 				Author: struct {
-					Login githubql.String
-				}{Login: githubql.String("author")},
+					Login githubv4.String
+				}{Login: githubv4.String("author")},
 				Repository: struct {
-					Name          githubql.String
-					NameWithOwner githubql.String
+					Name          githubv4.String
+					NameWithOwner githubv4.String
 					Owner         struct {
-						Login githubql.String
+						Login githubv4.String
 					}
-				}{NameWithOwner: githubql.String("org/repo")},
+				}{NameWithOwner: githubv4.String("org/repo")},
 				HeadRefName: "head",
 			},
 			config:      config.Tide{PRStatusBaseURL: "pr.status.com"},

@@ -26,7 +26,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/shurcooL/githubql"
+	"github.com/shurcooL/githubv4"
 	"github.com/sirupsen/logrus"
 
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -176,8 +176,8 @@ func TestAccumulateBatch(t *testing.T) {
 		var pulls []PullRequest
 		for _, p := range test.pulls {
 			pr := PullRequest{
-				Number:     githubql.Int(p.number),
-				HeadRefOID: githubql.String(p.sha),
+				Number:     githubv4.Int(p.number),
+				HeadRefOID: githubv4.String(p.sha),
 			}
 			pulls = append(pulls, pr)
 		}
@@ -363,7 +363,7 @@ func TestAccumulate(t *testing.T) {
 		for num, sha := range test.pullRequests {
 			pulls = append(
 				pulls,
-				PullRequest{Number: githubql.Int(num), HeadRefOID: githubql.String(sha)},
+				PullRequest{Number: githubv4.Int(num), HeadRefOID: githubv4.String(sha)},
 			)
 		}
 		var pjs []kube.ProwJob
@@ -557,11 +557,11 @@ func TestDividePool(t *testing.T) {
 	}
 	pulls := make(map[string]PullRequest)
 	for _, p := range testPulls {
-		npr := PullRequest{Number: githubql.Int(p.number)}
-		npr.BaseRef.Name = githubql.String(p.branch)
+		npr := PullRequest{Number: githubv4.Int(p.number)}
+		npr.BaseRef.Name = githubv4.String(p.branch)
 		npr.BaseRef.Prefix = "refs/heads/"
-		npr.Repository.Name = githubql.String(p.repo)
-		npr.Repository.Owner.Login = githubql.String(p.org)
+		npr.Repository.Name = githubv4.String(p.repo)
+		npr.Repository.Owner.Login = githubv4.String(p.org)
 		pulls[prKey(&npr)] = npr
 	}
 	var pjs []kube.ProwJob
@@ -696,16 +696,16 @@ func TestPickBatch(t *testing.T) {
 		if err := lg.Checkout("o", "r", "master"); err != nil {
 			t.Fatalf("Error checking out master: %v", err)
 		}
-		oid := githubql.String(fmt.Sprintf("origin/pr-%d", testpr.number))
+		oid := githubv4.String(fmt.Sprintf("origin/pr-%d", testpr.number))
 		var pr PullRequest
-		pr.Number = githubql.Int(testpr.number)
+		pr.Number = githubv4.Int(testpr.number)
 		pr.HeadRefOID = oid
 		pr.Commits.Nodes = []struct {
 			Commit Commit
 		}{{Commit: Commit{OID: oid}}}
-		pr.Commits.Nodes[0].Commit.Status.Contexts = append(pr.Commits.Nodes[0].Commit.Status.Contexts, Context{State: githubql.StatusStateSuccess})
+		pr.Commits.Nodes[0].Commit.Status.Contexts = append(pr.Commits.Nodes[0].Commit.Status.Contexts, Context{State: githubv4.StatusStateSuccess})
 		if !testpr.success {
-			pr.Commits.Nodes[0].Commit.Status.Contexts[0].State = githubql.StatusStateFailure
+			pr.Commits.Nodes[0].Commit.Status.Contexts[0].State = githubv4.StatusStateFailure
 		}
 		sp.prs = append(sp.prs, pr)
 	}
@@ -984,9 +984,9 @@ func TestTakeAction(t *testing.T) {
 				if err := lg.Checkout("o", "r", "master"); err != nil {
 					t.Fatalf("Error checking out master: %v", err)
 				}
-				oid := githubql.String(fmt.Sprintf("origin/pr-%d", i))
+				oid := githubv4.String(fmt.Sprintf("origin/pr-%d", i))
 				var pr PullRequest
-				pr.Number = githubql.Int(i)
+				pr.Number = githubv4.Int(i)
 				pr.HeadRefOID = oid
 				pr.Commits.Nodes = []struct {
 					Commit Commit
@@ -1042,8 +1042,8 @@ func TestServeHTTP(t *testing.T) {
 	pr1 := PullRequest{}
 	pr1.Commits.Nodes = append(pr1.Commits.Nodes, struct{ Commit Commit }{})
 	pr1.Commits.Nodes[0].Commit.Status.Contexts = []Context{{
-		Context:     githubql.String("coverage/coveralls"),
-		Description: githubql.String("Coverage increased (+0.1%) to 27.599%"),
+		Context:     githubv4.String("coverage/coveralls"),
+		Description: githubv4.String("Coverage increased (+0.1%) to 27.599%"),
 	}}
 	c := &Controller{
 		pools: []Pool{
@@ -1113,21 +1113,21 @@ func TestHeadContexts(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Logf("Running test case %q", tc.name)
-		fgc := &fgc{combinedStatus: map[string]string{win: string(githubql.StatusStateSuccess)}}
+		fgc := &fgc{combinedStatus: map[string]string{win: string(githubv4.StatusStateSuccess)}}
 		if tc.expectAPICall {
 			fgc.expectedSHA = headSHA
 		}
-		pr := &PullRequest{HeadRefOID: githubql.String(headSHA)}
+		pr := &PullRequest{HeadRefOID: githubv4.String(headSHA)}
 		for _, ctx := range tc.commitContexts {
 			commit := Commit{
 				Status: struct{ Contexts []Context }{
 					Contexts: []Context{
 						{
-							Context: githubql.String(ctx.context),
+							Context: githubv4.String(ctx.context),
 						},
 					},
 				},
-				OID: githubql.String(ctx.sha),
+				OID: githubv4.String(ctx.sha),
 			}
 			pr.Commits.Nodes = append(pr.Commits.Nodes, struct{ Commit Commit }{commit})
 		}
@@ -1142,38 +1142,38 @@ func TestHeadContexts(t *testing.T) {
 	}
 }
 
-func testPR(org, repo, branch string, number int, mergeable githubql.MergeableState) PullRequest {
+func testPR(org, repo, branch string, number int, mergeable githubv4.MergeableState) PullRequest {
 	pr := PullRequest{
-		Number:     githubql.Int(number),
+		Number:     githubv4.Int(number),
 		Mergeable:  mergeable,
-		HeadRefOID: githubql.String("SHA"),
+		HeadRefOID: githubv4.String("SHA"),
 	}
-	pr.Repository.Owner.Login = githubql.String(org)
-	pr.Repository.Name = githubql.String(repo)
-	pr.Repository.NameWithOwner = githubql.String(fmt.Sprintf("%s/%s", org, repo))
-	pr.BaseRef.Name = githubql.String(branch)
+	pr.Repository.Owner.Login = githubv4.String(org)
+	pr.Repository.Name = githubv4.String(repo)
+	pr.Repository.NameWithOwner = githubv4.String(fmt.Sprintf("%s/%s", org, repo))
+	pr.BaseRef.Name = githubv4.String(branch)
 
 	pr.Commits.Nodes = append(pr.Commits.Nodes, struct{ Commit Commit }{
 		Commit{
 			Status: struct{ Contexts []Context }{
 				Contexts: []Context{
 					{
-						Context: githubql.String("context"),
-						State:   githubql.StatusStateSuccess,
+						Context: githubv4.String("context"),
+						State:   githubv4.StatusStateSuccess,
 					},
 				},
 			},
-			OID: githubql.String("SHA"),
+			OID: githubv4.String("SHA"),
 		},
 	})
 	return pr
 }
 
 func TestSync(t *testing.T) {
-	mergeableA := testPR("org", "repo", "A", 5, githubql.MergeableStateMergeable)
-	unmergeableA := testPR("org", "repo", "A", 6, githubql.MergeableStateConflicting)
-	unmergeableB := testPR("org", "repo", "B", 7, githubql.MergeableStateConflicting)
-	unknownA := testPR("org", "repo", "A", 8, githubql.MergeableStateUnknown)
+	mergeableA := testPR("org", "repo", "A", 5, githubv4.MergeableStateMergeable)
+	unmergeableA := testPR("org", "repo", "A", 6, githubv4.MergeableStateConflicting)
+	unmergeableB := testPR("org", "repo", "B", 7, githubv4.MergeableStateConflicting)
+	unknownA := testPR("org", "repo", "A", 8, githubv4.MergeableStateUnknown)
 
 	testcases := []struct {
 		name string
@@ -1343,16 +1343,16 @@ func TestFilterSubpool(t *testing.T) {
 					mergeable: true,
 					contexts: []Context{
 						{
-							Context: githubql.String("pj-a"),
-							State:   githubql.StatusStateSuccess,
+							Context: githubv4.String("pj-a"),
+							State:   githubv4.StatusStateSuccess,
 						},
 						{
-							Context: githubql.String("pj-b"),
-							State:   githubql.StatusStateSuccess,
+							Context: githubv4.String("pj-b"),
+							State:   githubv4.StatusStateSuccess,
 						},
 						{
-							Context: githubql.String("other-a"),
-							State:   githubql.StatusStateSuccess,
+							Context: githubv4.String("other-a"),
+							State:   githubv4.StatusStateSuccess,
 						},
 					},
 				},
@@ -1367,16 +1367,16 @@ func TestFilterSubpool(t *testing.T) {
 					mergeable: false,
 					contexts: []Context{
 						{
-							Context: githubql.String("pj-a"),
-							State:   githubql.StatusStateSuccess,
+							Context: githubv4.String("pj-a"),
+							State:   githubv4.StatusStateSuccess,
 						},
 						{
-							Context: githubql.String("pj-b"),
-							State:   githubql.StatusStateSuccess,
+							Context: githubv4.String("pj-b"),
+							State:   githubv4.StatusStateSuccess,
 						},
 						{
-							Context: githubql.String("other-a"),
-							State:   githubql.StatusStateSuccess,
+							Context: githubv4.String("other-a"),
+							State:   githubv4.StatusStateSuccess,
 						},
 					},
 				},
@@ -1391,16 +1391,16 @@ func TestFilterSubpool(t *testing.T) {
 					mergeable: true,
 					contexts: []Context{
 						{
-							Context: githubql.String("pj-a"),
-							State:   githubql.StatusStateSuccess,
+							Context: githubv4.String("pj-a"),
+							State:   githubv4.StatusStateSuccess,
 						},
 						{
-							Context: githubql.String("pj-b"),
-							State:   githubql.StatusStateSuccess,
+							Context: githubv4.String("pj-b"),
+							State:   githubv4.StatusStateSuccess,
 						},
 						{
-							Context: githubql.String("other-a"),
-							State:   githubql.StatusStatePending,
+							Context: githubv4.String("other-a"),
+							State:   githubv4.StatusStatePending,
 						},
 					},
 				},
@@ -1415,16 +1415,16 @@ func TestFilterSubpool(t *testing.T) {
 					mergeable: true,
 					contexts: []Context{
 						{
-							Context: githubql.String("pj-a"),
-							State:   githubql.StatusStateSuccess,
+							Context: githubv4.String("pj-a"),
+							State:   githubv4.StatusStateSuccess,
 						},
 						{
-							Context: githubql.String("pj-b"),
-							State:   githubql.StatusStatePending,
+							Context: githubv4.String("pj-b"),
+							State:   githubv4.StatusStatePending,
 						},
 						{
-							Context: githubql.String("other-a"),
-							State:   githubql.StatusStateSuccess,
+							Context: githubv4.String("other-a"),
+							State:   githubv4.StatusStateSuccess,
 						},
 					},
 				},
@@ -1439,16 +1439,16 @@ func TestFilterSubpool(t *testing.T) {
 					mergeable: true,
 					contexts: []Context{
 						{
-							Context: githubql.String("pj-a"),
-							State:   githubql.StatusStateSuccess,
+							Context: githubv4.String("pj-a"),
+							State:   githubv4.StatusStateSuccess,
 						},
 						{
-							Context: githubql.String("pj-b"),
-							State:   githubql.StatusStateFailure,
+							Context: githubv4.String("pj-b"),
+							State:   githubv4.StatusStateFailure,
 						},
 						{
-							Context: githubql.String("other-a"),
-							State:   githubql.StatusStateSuccess,
+							Context: githubv4.String("other-a"),
+							State:   githubv4.StatusStateSuccess,
 						},
 					},
 				},
@@ -1463,12 +1463,12 @@ func TestFilterSubpool(t *testing.T) {
 					mergeable: true,
 					contexts: []Context{
 						{
-							Context: githubql.String("pj-b"),
-							State:   githubql.StatusStateSuccess,
+							Context: githubv4.String("pj-b"),
+							State:   githubv4.StatusStateSuccess,
 						},
 						{
-							Context: githubql.String("other-a"),
-							State:   githubql.StatusStateSuccess,
+							Context: githubv4.String("other-a"),
+							State:   githubv4.StatusStateSuccess,
 						},
 					},
 				},
@@ -1483,20 +1483,20 @@ func TestFilterSubpool(t *testing.T) {
 					mergeable: true,
 					contexts: []Context{
 						{
-							Context: githubql.String("pj-a"),
-							State:   githubql.StatusStateSuccess,
+							Context: githubv4.String("pj-a"),
+							State:   githubv4.StatusStateSuccess,
 						},
 						{
-							Context: githubql.String("pj-b"),
-							State:   githubql.StatusStateSuccess,
+							Context: githubv4.String("pj-b"),
+							State:   githubv4.StatusStateSuccess,
 						},
 						{
-							Context: githubql.String("other-a"),
-							State:   githubql.StatusStateSuccess,
+							Context: githubv4.String("other-a"),
+							State:   githubv4.StatusStateSuccess,
 						},
 						{
-							Context: githubql.String("unknown"),
-							State:   githubql.StatusStateFailure,
+							Context: githubv4.String("unknown"),
+							State:   githubv4.StatusStateFailure,
 						},
 					},
 				},
@@ -1511,16 +1511,16 @@ func TestFilterSubpool(t *testing.T) {
 					mergeable: true,
 					contexts: []Context{
 						{
-							Context: githubql.String("pj-a"),
-							State:   githubql.StatusStateSuccess,
+							Context: githubv4.String("pj-a"),
+							State:   githubv4.StatusStateSuccess,
 						},
 						{
-							Context: githubql.String("pj-b"),
-							State:   githubql.StatusStateSuccess,
+							Context: githubv4.String("pj-b"),
+							State:   githubv4.StatusStateSuccess,
 						},
 						{
-							Context: githubql.String("other-a"),
-							State:   githubql.StatusStateFailure,
+							Context: githubv4.String("other-a"),
+							State:   githubv4.StatusStateFailure,
 						},
 					},
 				},
@@ -1529,20 +1529,20 @@ func TestFilterSubpool(t *testing.T) {
 					mergeable: true,
 					contexts: []Context{
 						{
-							Context: githubql.String("pj-a"),
-							State:   githubql.StatusStateSuccess,
+							Context: githubv4.String("pj-a"),
+							State:   githubv4.StatusStateSuccess,
 						},
 						{
-							Context: githubql.String("pj-b"),
-							State:   githubql.StatusStateSuccess,
+							Context: githubv4.String("pj-b"),
+							State:   githubv4.StatusStateSuccess,
 						},
 						{
-							Context: githubql.String("other-a"),
-							State:   githubql.StatusStateSuccess,
+							Context: githubv4.String("other-a"),
+							State:   githubv4.StatusStateSuccess,
 						},
 						{
-							Context: githubql.String("unknown"),
-							State:   githubql.StatusStateSuccess,
+							Context: githubv4.String("unknown"),
+							State:   githubv4.StatusStateSuccess,
 						},
 					},
 				},
@@ -1557,16 +1557,16 @@ func TestFilterSubpool(t *testing.T) {
 					mergeable: true,
 					contexts: []Context{
 						{
-							Context: githubql.String("pj-a"),
-							State:   githubql.StatusStateSuccess,
+							Context: githubv4.String("pj-a"),
+							State:   githubv4.StatusStateSuccess,
 						},
 						{
-							Context: githubql.String("pj-b"),
-							State:   githubql.StatusStateSuccess,
+							Context: githubv4.String("pj-b"),
+							State:   githubv4.StatusStateSuccess,
 						},
 						{
-							Context: githubql.String("other-a"),
-							State:   githubql.StatusStateSuccess,
+							Context: githubv4.String("other-a"),
+							State:   githubv4.StatusStateSuccess,
 						},
 					},
 				},
@@ -1575,16 +1575,16 @@ func TestFilterSubpool(t *testing.T) {
 					mergeable: true,
 					contexts: []Context{
 						{
-							Context: githubql.String("pj-a"),
-							State:   githubql.StatusStateSuccess,
+							Context: githubv4.String("pj-a"),
+							State:   githubv4.StatusStateSuccess,
 						},
 						{
-							Context: githubql.String("pj-b"),
-							State:   githubql.StatusStateSuccess,
+							Context: githubv4.String("pj-b"),
+							State:   githubv4.StatusStateSuccess,
 						},
 						{
-							Context: githubql.String("other-a"),
-							State:   githubql.StatusStateSuccess,
+							Context: githubv4.String("other-a"),
+							State:   githubv4.StatusStateSuccess,
 						},
 					},
 				},
@@ -1604,7 +1604,7 @@ func TestFilterSubpool(t *testing.T) {
 			}
 			for _, pull := range tc.prs {
 				pr := PullRequest{
-					Number: githubql.Int(pull.number),
+					Number: githubv4.Int(pull.number),
 				}
 				pr.Commits.Nodes = []struct{ Commit Commit }{
 					{
@@ -1616,7 +1616,7 @@ func TestFilterSubpool(t *testing.T) {
 					},
 				}
 				if !pull.mergeable {
-					pr.Mergeable = githubql.MergeableStateConflicting
+					pr.Mergeable = githubv4.MergeableStateConflicting
 				}
 				sp.prs = append(sp.prs, pr)
 			}
@@ -1642,8 +1642,8 @@ func TestIsPassing(t *testing.T) {
 	yes := true
 	no := false
 	headSHA := "head"
-	success := string(githubql.StatusStateSuccess)
-	failure := string(githubql.StatusStateFailure)
+	success := string(githubv4.StatusStateSuccess)
+	failure := string(githubv4.StatusStateFailure)
 	testCases := []struct {
 		name             string
 		passing          bool
@@ -1748,7 +1748,7 @@ func TestIsPassing(t *testing.T) {
 			t.Errorf("Failed to get log output before testing: %v", err)
 			t.FailNow()
 		}
-		pr := PullRequest{HeadRefOID: githubql.String(headSHA)}
+		pr := PullRequest{HeadRefOID: githubv4.String(headSHA)}
 		passing := isPassingTests(log, ghc, pr, &tc.config)
 		if passing != tc.passing {
 			t.Errorf("%s: Expected %t got %t", tc.name, tc.passing, passing)
@@ -1758,8 +1758,8 @@ func TestIsPassing(t *testing.T) {
 
 func TestPresubmitsByPull(t *testing.T) {
 	samplePR := PullRequest{
-		Number:     githubql.Int(100),
-		HeadRefOID: githubql.String("sha"),
+		Number:     githubv4.Int(100),
+		HeadRefOID: githubv4.String("sha"),
 	}
 	testcases := []struct {
 		name string

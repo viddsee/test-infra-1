@@ -26,7 +26,7 @@ import (
 	"time"
 
 	gogithub "github.com/google/go-github/github"
-	"github.com/shurcooL/githubql"
+	"github.com/shurcooL/githubv4"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 
@@ -79,8 +79,8 @@ type DashboardAgent struct {
 }
 
 type Label struct {
-	ID   githubql.ID
-	Name githubql.String
+	ID   githubv4.ID
+	Name githubv4.String
 }
 
 // Context represent github contexts.
@@ -92,22 +92,22 @@ type Context struct {
 
 // PullRequest holds graphql response data for github pull request.
 type PullRequest struct {
-	Number githubql.Int
-	Merged githubql.Boolean
-	Title  githubql.String
+	Number githubv4.Int
+	Merged githubv4.Boolean
+	Title  githubv4.String
 	Author struct {
-		Login githubql.String
+		Login githubv4.String
 	}
 	BaseRef struct {
-		Name   githubql.String
-		Prefix githubql.String
+		Name   githubv4.String
+		Prefix githubv4.String
 	}
-	HeadRefOID githubql.String `graphql:"headRefOid"`
+	HeadRefOID githubv4.String `graphql:"headRefOid"`
 	Repository struct {
-		Name          githubql.String
-		NameWithOwner githubql.String
+		Name          githubv4.String
+		NameWithOwner githubv4.String
 		Owner         struct {
-			Login githubql.String
+			Login githubv4.String
 		}
 	}
 	Labels struct {
@@ -116,26 +116,26 @@ type PullRequest struct {
 		}
 	} `graphql:"labels(first: 100)"`
 	Milestone struct {
-		ID     githubql.ID
-		Closed githubql.Boolean
+		ID     githubv4.ID
+		Closed githubv4.Boolean
 	}
 }
 
 type UserLoginQuery struct {
 	Viewer struct {
-		Login githubql.String
+		Login githubv4.String
 	}
 }
 
 type searchQuery struct {
 	RateLimit struct {
-		Cost      githubql.Int
-		Remaining githubql.Int
+		Cost      githubv4.Int
+		Remaining githubv4.Int
 	}
 	Search struct {
 		PageInfo struct {
-			HasNextPage githubql.Boolean
-			EndCursor   githubql.String
+			HasNextPage githubv4.Boolean
+			EndCursor   githubv4.String
 		}
 		Nodes []struct {
 			PullRequest PullRequest `graphql:"... on PullRequest"`
@@ -282,8 +282,8 @@ func (da *DashboardAgent) HandlePrStatus(queryHandler PullRequestQueryHandler) h
 func (da *DashboardAgent) QueryPullRequests(ctx context.Context, ghc githubClient, query string) ([]PullRequest, error) {
 	var prs []PullRequest
 	vars := map[string]interface{}{
-		"query":        (githubql.String)(query),
-		"searchCursor": (*githubql.String)(nil),
+		"query":        (githubv4.String)(query),
+		"searchCursor": (*githubv4.String)(nil),
 	}
 	var totalCost int
 	var remaining int
@@ -300,7 +300,7 @@ func (da *DashboardAgent) QueryPullRequests(ctx context.Context, ghc githubClien
 		if !sq.Search.PageInfo.HasNextPage {
 			break
 		}
-		vars["searchCursor"] = githubql.NewString(sq.Search.PageInfo.EndCursor)
+		vars["searchCursor"] = githubv4.NewString(sq.Search.PageInfo.EndCursor)
 	}
 	da.log.Infof("Search for query \"%s\" cost %d point(s). %d remaining.", query, totalCost, remaining)
 	return prs, nil

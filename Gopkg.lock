@@ -675,9 +675,10 @@
   revision = "836a144573533ea4da4e6929c235fd348aed1c80"
 
 [[projects]]
-  name = "github.com/shurcooL/githubql"
+  branch = "master"
+  name = "github.com/shurcooL/githubv4"
   packages = ["."]
-  revision = "71882d9f5f43fe50be204fe37db8994bf70072bb"
+  revision = "19298c78142b5fe80c2cdaa2091bc51cbc3a94fc"
 
 [[projects]]
   name = "github.com/shurcooL/go"
@@ -685,13 +686,14 @@
   revision = "5924e6132c2f184e262d4bc779e5745fa297d093"
 
 [[projects]]
+  branch = "master"
   name = "github.com/shurcooL/graphql"
   packages = [
     ".",
     "ident",
     "internal/jsonutil",
   ]
-  revision = "68e5b1b3ab56633e42939506bc61f0b9fb2b7a79"
+  revision = "62c9ce094e75302d560f7adcdf16c06d05aaa958"
 
 [[projects]]
   name = "github.com/sirupsen/logrus"
@@ -1155,6 +1157,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "94c6beed599a2dc5882bb6106d24c700255c966a15c82164719738bbac0eaafd"
+  inputs-digest = "f5e49d8f78b2bb4740c06b65adcf6e23a484701777bb3f4caac31fed9b20b676"
   solver-name = "gps-cdcl"
   solver-version = 1

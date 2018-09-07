@@ -23,7 +23,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/shurcooL/githubql"
+	"github.com/shurcooL/githubv4"
 	"github.com/sirupsen/logrus"
 
 	"k8s.io/test-infra/prow/github"
@@ -120,7 +120,7 @@ func HandleAll(log *logrus.Entry, ghc githubClient, config *plugins.Configuratio
 
 	for _, pr := range prs {
 		// Skip PRs that are calculating mergeability. They will be updated by event or next loop.
-		if pr.Mergeable == githubql.MergeableStateUnknown {
+		if pr.Mergeable == githubv4.MergeableStateUnknown {
 			continue
 		}
 		org := string(pr.Repository.Owner.Login)
@@ -146,7 +146,7 @@ func HandleAll(log *logrus.Entry, ghc githubClient, config *plugins.Configuratio
 			num,
 			string(pr.Author.Login),
 			hasLabel,
-			pr.Mergeable == githubql.MergeableStateMergeable,
+			pr.Mergeable == githubv4.MergeableStateMergeable,
 		)
 		if err != nil {
 			l.WithError(err).Error("Error handling PR.")
@@ -186,8 +186,8 @@ func shouldPrune(botName string) func(github.IssueComment) bool {
 func search(ctx context.Context, log *logrus.Entry, ghc githubClient, q string) ([]pullRequest, error) {
 	var ret []pullRequest
 	vars := map[string]interface{}{
-		"query":        githubql.String(q),
-		"searchCursor": (*githubql.String)(nil),
+		"query":        githubv4.String(q),
+		"searchCursor": (*githubv4.String)(nil),
 	}
 	var totalCost int
 	var remaining int
@@ -204,7 +204,7 @@ func search(ctx context.Context, log *logrus.Entry, ghc githubClient, q string) 
 		if !sq.Search.PageInfo.HasNextPage {
 			break
 		}
-		vars["searchCursor"] = githubql.NewString(sq.Search.PageInfo.EndCursor)
+		vars["searchCursor"] = githubv4.NewString(sq.Search.PageInfo.EndCursor)
 	}
 	log.Infof("Search for query \"%s\" cost %d point(s). %d remaining.", q, totalCost, remaining)
 	return ret, nil
@@ -212,33 +212,33 @@ func search(ctx context.Context, log *logrus.Entry, ghc githubClient, q string) 
 
 // TODO(spxtr): Add useful information for frontend stuff such as links.
 type pullRequest struct {
-	Number githubql.Int
+	Number githubv4.Int
 	Author struct {
-		Login githubql.String
+		Login githubv4.String
 	}
 	Repository struct {
-		Name  githubql.String
+		Name  githubv4.String
 		Owner struct {
-			Login githubql.String
+			Login githubv4.String
 		}
 	}
 	Labels struct {
 		Nodes []struct {
-			Name githubql.String
+			Name githubv4.String
 		}
 	} `graphql:"labels(first:100)"`
-	Mergeable githubql.MergeableState
+	Mergeable githubv4.MergeableState
 }
 
 type searchQuery struct {
 	RateLimit struct {
-		Cost      githubql.Int
-		Remaining githubql.Int
+		Cost      githubv4.Int
+		Remaining githubv4.Int
 	}
 	Search struct {
 		PageInfo struct {
-			HasNextPage githubql.Boolean
-			EndCursor   githubql.String
+			HasNextPage githubv4.Boolean
+			EndCursor   githubv4.String
 		}
 		Nodes []struct {
 			PullRequest pullRequest `graphql:"... on PullRequest"`

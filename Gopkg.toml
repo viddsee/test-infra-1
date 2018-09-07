@@ -97,3 +97,11 @@ required = [
 [[constraint]]
   name = "github.com/bazelbuild/bazel-gazelle"
   version = "0.11.0"
+
+[[constraint]]
+  name = "github.com/shurcooL/githubv4"
+  branch = "master"
+
+[[override]]
+  name = "github.com/shurcooL/graphql"
+  branch = "master"

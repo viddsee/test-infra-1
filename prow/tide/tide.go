@@ -29,7 +29,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/shurcooL/githubql"
+	"github.com/shurcooL/githubv4"
 	"github.com/sirupsen/logrus"
 
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -168,9 +168,9 @@ func byRepoAndNumber(prs []PullRequest) map[string]PullRequest {
 // newExpectedContext creates a Context with Expected state.
 func newExpectedContext(c string) Context {
 	return Context{
-		Context:     githubql.String(c),
-		State:       githubql.StatusStateExpected,
-		Description: githubql.String(""),
+		Context:     githubv4.String(c),
+		State:       githubv4.StatusStateExpected,
+		Description: githubv4.String(""),
 	}
 }
 
@@ -348,7 +348,7 @@ func filterSubpool(ghc githubClient, sp *subpool) *subpool {
 func filterPR(ghc githubClient, sp *subpool, pr *PullRequest) bool {
 	log := sp.log.WithFields(pr.logFields())
 	// Skip PRs that are known to be unmergeable.
-	if pr.Mergeable == githubql.MergeableStateConflicting {
+	if pr.Mergeable == githubv4.MergeableStateConflicting {
 		log.Debug("filtering out PR as it is unmergeable")
 		return true
 	}
@@ -361,7 +361,7 @@ func filterPR(ghc githubClient, sp *subpool, pr *PullRequest) bool {
 	}
 	pjContexts := sp.presubmitContexts[int(pr.Number)]
 	for _, ctx := range unsuccessfulContexts(contexts, sp.cc, log) {
-		if ctx.State != githubql.StatusStatePending || !pjContexts.Has(string(ctx.Context)) {
+		if ctx.State != githubv4.StatusStatePending || !pjContexts.Has(string(ctx.Context)) {
 			log.WithField("context", ctx.Context).Debug("filtering out PR as unsuccessful context is not a pending Prow-controlled context")
 			return true
 		}
@@ -426,7 +426,7 @@ func unsuccessfulContexts(contexts []Context, cc contextChecker, log *logrus.Ent
 		if cc.IsOptional(string(ctx.Context)) {
 			continue
 		}
-		if ctx.State != githubql.StatusStateSuccess {
+		if ctx.State != githubv4.StatusStateSuccess {
 			failed = append(failed, ctx)
 		}
 	}
@@ -1027,8 +1027,8 @@ func (c *Controller) dividePool(pool map[string]PullRequest, pjs []kube.ProwJob)
 func search(ctx context.Context, ghc githubClient, log *logrus.Entry, q string) ([]PullRequest, error) {
 	var ret []PullRequest
 	vars := map[string]interface{}{
-		"query":        githubql.String(q),
-		"searchCursor": (*githubql.String)(nil),
+		"query":        githubv4.String(q),
+		"searchCursor": (*githubv4.String)(nil),
 	}
 	var totalCost int
 	var remaining int
@@ -1045,7 +1045,7 @@ func search(ctx context.Context, ghc githubClient, log *logrus.Entry, q string) 
 		if !sq.Search.PageInfo.HasNextPage {
 			break
 		}
-		vars["searchCursor"] = githubql.NewString(sq.Search.PageInfo.EndCursor)
+		vars["searchCursor"] = githubv4.NewString(sq.Search.PageInfo.EndCursor)
 	}
 	log.Debugf("Search for query \"%s\" returned %d PRs and cost %d point(s). %d remaining.", q, len(ret), totalCost, remaining)
 	return ret, nil
@@ -1053,22 +1053,22 @@ func search(ctx context.Context, ghc githubClient, log *logrus.Entry, q string) 
 
 // PullRequest holds graphql data about a PR, including its commits and their contexts.
 type PullRequest struct {
-	Number githubql.Int
+	Number githubv4.Int
 	Author struct {
-		Login githubql.String
+		Login githubv4.String
 	}
 	BaseRef struct {
-		Name   githubql.String
-		Prefix githubql.String
+		Name   githubv4.String
+		Prefix githubv4.String
 	}
-	HeadRefName githubql.String `graphql:"headRefName"`
-	HeadRefOID  githubql.String `graphql:"headRefOid"`
-	Mergeable   githubql.MergeableState
+	HeadRefName githubv4.String `graphql:"headRefName"`
+	HeadRefOID  githubv4.String `graphql:"headRefOid"`
+	Mergeable   githubv4.MergeableState
 	Repository  struct {
-		Name          githubql.String
-		NameWithOwner githubql.String
+		Name          githubv4.String
+		NameWithOwner githubv4.String
 		Owner         struct {
-			Login githubql.String
+			Login githubv4.String
 		}
 	}
 	Commits struct {
@@ -1083,11 +1083,11 @@ type PullRequest struct {
 	} `graphql:"commits(last: 4)"`
 	Labels struct {
 		Nodes []struct {
-			Name githubql.String
+			Name githubv4.String
 		}
 	} `graphql:"labels(first: 100)"`
 	Milestone *struct {
-		Title githubql.String
+		Title githubv4.String
 	}
 }
 
@@ -1096,25 +1096,25 @@ type Commit struct {
 	Status struct {
 		Contexts []Context
 	}
-	OID githubql.String `graphql:"oid"`
+	OID githubv4.String `graphql:"oid"`
 }
 
 // Context holds graphql response data for github contexts.
 type Context struct {
-	Context     githubql.String
-	Description githubql.String
-	State       githubql.StatusState
+	Context     githubv4.String
+	Description githubv4.String
+	State       githubv4.StatusState
 }
 
 type searchQuery struct {
 	RateLimit struct {
-		Cost      githubql.Int
-		Remaining githubql.Int
+		Cost      githubv4.Int
+		Remaining githubv4.Int
 	}
 	Search struct {
 		PageInfo struct {
-			HasNextPage githubql.Boolean
-			EndCursor   githubql.String
+			HasNextPage githubv4.Boolean
+			EndCursor   githubv4.String
 		}
 		Nodes []struct {
 			PullRequest PullRequest `graphql:"... on PullRequest"`
@@ -1162,9 +1162,9 @@ func headContexts(log *logrus.Entry, ghc githubClient, pr *PullRequest) ([]Conte
 		contexts = append(
 			contexts,
 			Context{
-				Context:     githubql.String(status.Context),
-				Description: githubql.String(status.Description),
-				State:       githubql.StatusState(strings.ToUpper(status.State)),
+				Context:     githubv4.String(status.Context),
+				Description: githubv4.String(status.Description),
+				State:       githubv4.StatusState(strings.ToUpper(status.State)),
 			},
 		)
 	}
