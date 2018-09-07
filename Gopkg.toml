@@ -106,3 +106,7 @@ required = [
   name = "github.com/jteeuwen/go-bindata"
   # latest, unlikely to change as go-bindata is no longer maintained
   revision = "6025e8de665b31fa74ab1a66f2cddd8c0abf887e"
+
+[[constraint]]
+  name = "github.com/knative/build"
+  branch = "master"

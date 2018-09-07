@@ -171,7 +171,9 @@ func (c *Controller) Sync() error {
 
 	pm := map[string]kube.Pod{}
 	for alias, client := range c.pkcs {
-		pods, err := client.ListPods(selector)
+		// hack: get all pods as knativie build pods dont have CreatedByProw=true label
+		// pods, err := client.ListPods(selector)
+		pods, err := client.ListPods("")
 		if err != nil {
 			return fmt.Errorf("error listing pods in cluster %q: %v", alias, err)
 		}
@@ -183,7 +185,7 @@ func (c *Controller) Sync() error {
 	// https://github.com/kubernetes/kubernetes/issues/53459
 	var k8sJobs []kube.ProwJob
 	for _, pj := range pjs {
-		if pj.Spec.Agent == kube.KubernetesAgent {
+		if pj.Spec.Agent == kube.KubernetesAgent || pj.Spec.Agent == kube.BuildAgent {
 			k8sJobs = append(k8sJobs, pj)
 		}
 	}
@@ -326,8 +328,21 @@ func syncProwJobs(
 func (c *Controller) syncPendingJob(pj kube.ProwJob, pm map[string]kube.Pod, reports chan<- kube.ProwJob) error {
 	// Record last known state so we can log state transitions.
 	prevState := pj.Status.State
-
-	pod, podExists := pm[pj.ObjectMeta.Name]
+	podExists := false
+	var pod kube.Pod
+	if pj.Spec.Agent == kube.BuildAgent {
+		for _, p := range pm {
+			// todo let's check this
+			bn, exist := p.Labels["build-name"]
+			if exist && bn == pj.Name {
+				podExists = true
+				pod = p
+				break
+			}
+		}
+	} else {
+		pod, podExists = pm[pj.ObjectMeta.Name]
+	}
 	if !podExists {
 		c.incrementNumPendingJobs(pj.Spec.Job)
 		// Pod is missing. This can happen in case the previous pod was deleted manually or by
@@ -393,16 +408,23 @@ func (c *Controller) syncPendingJob(pj kube.ProwJob, pm map[string]kube.Pod, rep
 		case kube.PodPending:
 			maxPodPending := c.ca.Config().Plank.PodPendingTimeout
 			if pod.Status.StartTime.IsZero() || time.Since(pod.Status.StartTime.Time) < maxPodPending {
-				// Pod is running. Do nothing.
-				c.incrementNumPendingJobs(pj.Spec.Job)
-				return nil
-			}
+				if pj.Status.State != kube.PendingState {
+					c.incrementNumPendingJobs(pj.Spec.Job)
+					pj.Status.State = kube.PendingState
+					pj.Status.Description = "Job pending."
+				} else {
+					// Pod is running. Do nothing.
+					c.incrementNumPendingJobs(pj.Spec.Job)
+					// dont return as knative builds may not have updated the prowjob yet
+				}
 
-			// Pod is stuck in pending state longer than maxPodPending
-			// abort the job, and talk to Github
-			pj.SetComplete()
-			pj.Status.State = kube.AbortedState
-			pj.Status.Description = "Job aborted."
+			} else {
+				// Pod is stuck in pending state longer than maxPodPending
+				// abort the job, and talk to Github
+				pj.SetComplete()
+				pj.Status.State = kube.AbortedState
+				pj.Status.Description = "Job aborted."
+			}
 
 		default:
 			// Pod is running. Do nothing.

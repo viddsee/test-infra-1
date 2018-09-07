@@ -29,6 +29,8 @@ import (
 	"k8s.io/test-infra/prow/config"
 	"k8s.io/test-infra/prow/github"
 	"k8s.io/test-infra/prow/kube"
+
+	buildv1alpha1 "github.com/knative/build/pkg/apis/build/v1alpha1"
 )
 
 const (
@@ -147,6 +149,17 @@ func PresubmitSpec(p config.Presubmit, refs kube.Refs) kube.ProwJobSpec {
 			pjs.Cluster = kube.DefaultClusterAlias
 		}
 	}
+	if pjs.Agent == kube.BuildAgent {
+		pjs.BuildSpec = p.BuildSpec
+		pjs.Cluster = p.Cluster
+		if pjs.Cluster == "" {
+			pjs.Cluster = kube.DefaultClusterAlias
+		}
+		sourceSpec := buildv1alpha1.SourceSpec{Git: &buildv1alpha1.GitSourceSpec{Url: "https://github.com/" + refs.Org + "/" + refs.Repo + ".git"}}
+		pjs.BuildSpec.Source = &sourceSpec
+		//pjs.BuildSpec.Source.Git.Url = "https://github.com/" + refs.Org + "/" + refs.Repo + ".git"
+		pjs.BuildSpec.Source.Git.Revision = refs.Pulls[0].SHA
+	}
 	for _, nextP := range p.RunAfterSuccess {
 		pjs.RunAfterSuccess = append(pjs.RunAfterSuccess, PresubmitSpec(nextP, refs))
 	}
@@ -224,6 +237,17 @@ func BatchSpec(p config.Presubmit, refs kube.Refs) kube.ProwJobSpec {
 		if pjs.Cluster == "" {
 			pjs.Cluster = kube.DefaultClusterAlias
 		}
+	}
+	if pjs.Agent == kube.BuildAgent {
+		pjs.BuildSpec = p.BuildSpec
+		pjs.Cluster = p.Cluster
+		if pjs.Cluster == "" {
+			pjs.Cluster = kube.DefaultClusterAlias
+		}
+		sourceSpec := buildv1alpha1.SourceSpec{Git: &buildv1alpha1.GitSourceSpec{Url: "https://github.com/" + refs.Org + "/" + refs.Repo + ".git"}}
+		pjs.BuildSpec.Source = &sourceSpec
+		//pjs.BuildSpec.Source.Git.Url = "https://github.com/" + refs.Org + "/" + refs.Repo + ".git"
+		pjs.BuildSpec.Source.Git.Revision = refs.Pulls[0].SHA
 	}
 	for _, nextP := range p.RunAfterSuccess {
 		pjs.RunAfterSuccess = append(pjs.RunAfterSuccess, BatchSpec(nextP, refs))

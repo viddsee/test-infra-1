@@ -25,6 +25,8 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/test-infra/prow/kube"
+
+	buildv1alpha1 "github.com/knative/build/pkg/apis/build/v1alpha1"
 )
 
 // Preset is intended to match the k8s' PodPreset feature, and may be removed
@@ -116,6 +118,9 @@ type Presubmit struct {
 
 	// Spec is the Kubernetes pod spec used if Agent is Kubernetes.
 	Spec *v1.PodSpec `json:"spec,omitempty"`
+
+	// knative build spec.
+	BuildSpec *buildv1alpha1.BuildSpec `json:"build_spec,omitempty"`
 
 	// RunAfterSuccess is a list of jobs to run after successfully running this one.
 	RunAfterSuccess []Presubmit `json:"run_after_success,omitempty"`
