@@ -23,6 +23,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// TemplateSpec returnes the Spec used by the template
+func (bt *BuildTemplate) TemplateSpec() BuildTemplateSpec {
+	return bt.Spec
+}
+
+// Copy performes a deep copy
+func (bt *BuildTemplate) Copy() BuildTemplateInterface {
+	return bt.DeepCopy()
+}
+
 // +genclient
 // +genclient:noStatus
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -80,6 +90,11 @@ type BuildTemplateList struct {
 	Items []BuildTemplate `json:"items"`
 }
 
-func (bt *BuildTemplate) GetGeneration() int64           { return bt.Spec.Generation }
+// GetGeneration returns the generation number of this object.
+func (bt *BuildTemplate) GetGeneration() int64 { return bt.Spec.Generation }
+
+// SetGeneration sets the generation number of this object.
 func (bt *BuildTemplate) SetGeneration(generation int64) { bt.Spec.Generation = generation }
-func (bt *BuildTemplate) GetSpecJSON() ([]byte, error)   { return json.Marshal(bt.Spec) }
+
+// GetSpecJSON returns the JSON serialization of this build template's Spec.
+func (bt *BuildTemplate) GetSpecJSON() ([]byte, error) { return json.Marshal(bt.Spec) }

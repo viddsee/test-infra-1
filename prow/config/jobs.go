@@ -145,6 +145,8 @@ type Postsubmit struct {
 	Cluster string `json:"cluster,omitempty"`
 	// Kubernetes pod spec.
 	Spec *v1.PodSpec `json:"spec,omitempty"`
+	// knative build spec.
+	BuildSpec *buildv1alpha1.BuildSpec `json:"build_spec,omitempty"`
 	// Maximum number of this job running concurrently, 0 implies no limit.
 	MaxConcurrency int `json:"max_concurrency,omitempty"`
 
@@ -167,6 +169,8 @@ type Periodic struct {
 	Cluster string `json:"cluster,omitempty"`
 	// Kubernetes pod spec.
 	Spec *v1.PodSpec `json:"spec,omitempty"`
+	// knative build spec.
+	BuildSpec *buildv1alpha1.BuildSpec `json:"build_spec,omitempty"`
 	// (deprecated)Interval to wait between two runs of the job.
 	Interval string `json:"interval"`
 	// Cron representation of job trigger time

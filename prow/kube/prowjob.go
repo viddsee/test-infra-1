@@ -66,7 +66,7 @@ const (
 	// JenkinsAgent means prow will schedule the job on jenkins.
 	JenkinsAgent = v1.JenkinsAgent
 	// BuildAgent means a knative build controller will perform the build steps for the job.
-	BuildAgent = v1.BuildAgent
+	BuildAgent = v1.KnativeBuildAgent
 )
 
 const (
