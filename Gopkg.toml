@@ -43,25 +43,21 @@ required = [
   version = "0.8.0"
 
 # Need override because release-1.10 and kubernetes-1.10.0 are not semver compliant
-[[override]]
+[[constraint]]
   name = "k8s.io/api"
-  branch = "release-1.11"
+  version = "kubernetes-1.11.0"
 
-[[override]]
-  name = "k8s.io/apiserver"
-  branch = "release-1.11"
-
-[[override]]
+[[constraint]]
   name = "k8s.io/apimachinery"
-  branch = "release-1.11"
+  version = "kubernetes-1.11.0"
 
-[[override]]
+[[constraint]]
   name = "k8s.io/code-generator"
-  branch = "release-1.10"
+  version = "kubernetes-1.11.0"
 
-[[override]]
+[[constraint]]
   name = "k8s.io/client-go"
-  version = "v8.0.0"
+  version = "kubernetes-1.11.0"
 
 [[override]]
   name = "github.com/json-iterator/go"

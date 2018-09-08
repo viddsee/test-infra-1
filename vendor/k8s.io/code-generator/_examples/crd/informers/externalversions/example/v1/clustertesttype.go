@@ -31,59 +31,58 @@ import (
 	v1 "k8s.io/code-generator/_examples/crd/listers/example/v1"
 )
 
-// TestTypeInformer provides access to a shared informer and lister for
-// TestTypes.
-type TestTypeInformer interface {
+// ClusterTestTypeInformer provides access to a shared informer and lister for
+// ClusterTestTypes.
+type ClusterTestTypeInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1.TestTypeLister
+	Lister() v1.ClusterTestTypeLister
 }
 
-type testTypeInformer struct {
+type clusterTestTypeInformer struct {
 	factory          internalinterfaces.SharedInformerFactory
 	tweakListOptions internalinterfaces.TweakListOptionsFunc
-	namespace        string
 }
 
-// NewTestTypeInformer constructs a new informer for TestType type.
+// NewClusterTestTypeInformer constructs a new informer for ClusterTestType type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewTestTypeInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
-	return NewFilteredTestTypeInformer(client, namespace, resyncPeriod, indexers, nil)
+func NewClusterTestTypeInformer(client versioned.Interface, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
+	return NewFilteredClusterTestTypeInformer(client, resyncPeriod, indexers, nil)
 }
 
-// NewFilteredTestTypeInformer constructs a new informer for TestType type.
+// NewFilteredClusterTestTypeInformer constructs a new informer for ClusterTestType type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewFilteredTestTypeInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
+func NewFilteredClusterTestTypeInformer(client versioned.Interface, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ExampleV1().TestTypes(namespace).List(options)
+				return client.ExampleV1().ClusterTestTypes().List(options)
 			},
 			WatchFunc: func(options meta_v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ExampleV1().TestTypes(namespace).Watch(options)
+				return client.ExampleV1().ClusterTestTypes().Watch(options)
 			},
 		},
-		&example_v1.TestType{},
+		&example_v1.ClusterTestType{},
 		resyncPeriod,
 		indexers,
 	)
 }
 
-func (f *testTypeInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewFilteredTestTypeInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
+func (f *clusterTestTypeInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
+	return NewFilteredClusterTestTypeInformer(client, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
 }
 
-func (f *testTypeInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&example_v1.TestType{}, f.defaultInformer)
+func (f *clusterTestTypeInformer) Informer() cache.SharedIndexInformer {
+	return f.factory.InformerFor(&example_v1.ClusterTestType{}, f.defaultInformer)
 }
 
-func (f *testTypeInformer) Lister() v1.TestTypeLister {
-	return v1.NewTestTypeLister(f.Informer().GetIndexer())
+func (f *clusterTestTypeInformer) Lister() v1.ClusterTestTypeLister {
+	return v1.NewClusterTestTypeLister(f.Informer().GetIndexer())
 }
