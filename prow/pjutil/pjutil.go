@@ -233,7 +233,7 @@ func interpolateEnvVars(pjs *kube.ProwJobSpec, refs kube.Refs) {
 		// TODO: figure out how to reliably get this even after pod restarts, we want the number to increase so maybe we
 		// TODO: need to think about using an external resource, kubernetes / git / some other to work out the next build #
 		//jmbrBuildNumber: "987654321",
-		//buildIDEnv:   buildID,
+		buildIDEnv: "1",
 		//prowJobIDEnv: spec.ProwJobID,
 		jobTypeEnv: string(pjs.Type),
 	}
