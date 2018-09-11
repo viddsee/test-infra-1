@@ -238,8 +238,12 @@ func interpolateEnvVars(pjs *kube.ProwJobSpec, refs kube.Refs) {
 		jobTypeEnv: string(pjs.Type),
 	}
 	branchName := ""
+	pullNumber := ""
+	pullPullSha := ""
 	if len(refs.Pulls) == 1 {
-		branchName = "PR-" + strconv.Itoa(refs.Pulls[0].Number)
+		pullNumber = strconv.Itoa(refs.Pulls[0].Number)
+		branchName = "PR-" + pullNumber
+		pullPullSha = refs.Pulls[0].SHA
 	}
 	// enrich with jenkins multi branch plugin env vars
 	env[jmbrBranchName] = branchName
@@ -250,10 +254,10 @@ func interpolateEnvVars(pjs *kube.ProwJobSpec, refs kube.Refs) {
 	env[pullBaseShaEnv] = refs.BaseSHA
 	env[pullRefsEnv] = refs.String()
 	env[cloneURI] = refs.CloneURI
-	env[pullNumberEnv] = strconv.Itoa(refs.Pulls[0].Number)
-	env[pullPullShaEnv] = refs.Pulls[0].SHA
+	env[pullNumberEnv] = pullNumber
+	env[pullPullShaEnv] = pullPullSha
 	pjs.BuildSpec.Source = &sourceSpec
-	pjs.BuildSpec.Source.Git.Revision = refs.Pulls[0].SHA
+	pjs.BuildSpec.Source.Git.Revision = pullPullSha
 	for i, step := range pjs.BuildSpec.Steps {
 		if len(step.Env) == 0 {
 			step.Env = []v1.EnvVar{}
