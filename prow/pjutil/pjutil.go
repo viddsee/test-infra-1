@@ -34,6 +34,8 @@ import (
 	"k8s.io/test-infra/prow/kube"
 
 	buildv1alpha1 "github.com/knative/build/pkg/apis/build/v1alpha1"
+	"os/exec"
+	"strings"
 )
 
 const (
@@ -50,8 +52,7 @@ const (
 	jobTypeEnv        = "JOB_TYPE"
 	prowJobIDEnv      = "PROW_JOB_ID"
 	buildIDEnv        = "BUILD_ID"
-	prowBuildIDEnv    = "BUILD_NUMBER" // Deprecated, will be removed in the future.
-	jenkinsBuildIDEnv = "buildId"      // Deprecated, will be removed in the future.
+	jenkinsXBuildIDEnv    = "JX_BUILD_NUMBER"
 	repoOwnerEnv      = "REPO_OWNER"
 	repoNameEnv       = "REPO_NAME"
 	pullBaseRefEnv    = "PULL_BASE_REF"
@@ -237,7 +238,9 @@ func interpolateEnvVars(pjs *kube.ProwJobSpec, refs kube.Refs) {
 		//prowJobIDEnv: spec.ProwJobID,
 		jobTypeEnv: string(pjs.Type),
 	}
-	branchName := ""
+
+	// todo lets get the proper branch name as this maybe a release branch
+	branchName := "master"
 	pullNumber := ""
 	pullPullSha := ""
 	if len(refs.Pulls) == 1 {
@@ -257,7 +260,13 @@ func interpolateEnvVars(pjs *kube.ProwJobSpec, refs kube.Refs) {
 	env[pullNumberEnv] = pullNumber
 	env[pullPullShaEnv] = pullPullSha
 	pjs.BuildSpec.Source = &sourceSpec
-	pjs.BuildSpec.Source.Git.Revision = pullPullSha
+	if pullPullSha != "" {
+		pjs.BuildSpec.Source.Git.Revision = pullPullSha
+	} else {
+		pjs.BuildSpec.Source.Git.Revision = refs.BaseSHA
+	}
+	env[jenkinsXBuildIDEnv] = getJenkinsXBuildNumber(refs.Org, refs.Repo, branchName)
+
 	for i, step := range pjs.BuildSpec.Steps {
 		if len(step.Env) == 0 {
 			step.Env = []v1.EnvVar{}
@@ -270,6 +279,13 @@ func interpolateEnvVars(pjs *kube.ProwJobSpec, refs kube.Refs) {
 			pjs.BuildSpec.Steps[i].Env = append(pjs.BuildSpec.Steps[i].Env, e)
 		}
 	}
+}
+func getJenkinsXBuildNumber(org, repo, branch string) string {
+	out, err := exec.Command("/jx", "step", "next-buildno", "-o", org, "-r", repo, "-b", strings.ToLower(branch)).Output()
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(out))
 }
 
 // PeriodicSpec initializes a ProwJobSpec for a given periodic job.
