@@ -28,7 +28,7 @@ import (
 	"k8s.io/test-infra/prow/kube"
 	"k8s.io/test-infra/prow/pjutil"
 	"k8s.io/test-infra/prow/plugins"
-)
+	)
 
 const (
 	commentTag = "<!-- test report -->"

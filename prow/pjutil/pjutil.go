@@ -227,7 +227,11 @@ func PostsubmitSpec(p config.Postsubmit, refs kube.Refs) kube.ProwJobSpec {
 func interpolateEnvVars(pjs *kube.ProwJobSpec, refs kube.Refs) {
 	//todo lets clean this up
 	sourceURL := fmt.Sprintf("https://github.com/%s/%s.git", refs.Org, refs.Repo)
-	sourceSpec := buildv1alpha1.SourceSpec{Git: &buildv1alpha1.GitSourceSpec{Url: sourceURL}}
+	sourceSpec := buildv1alpha1.SourceSpec{
+		Git: &buildv1alpha1.GitSourceSpec{
+			Url: sourceURL,
+		},
+	}
 	// todo taken from downwardapi.JobSpec, lets clean up the duplication
 	env := map[string]string{
 		jobNameEnv: pjs.Job,
@@ -260,6 +264,7 @@ func interpolateEnvVars(pjs *kube.ProwJobSpec, refs kube.Refs) {
 	env[pullNumberEnv] = pullNumber
 	env[pullPullShaEnv] = pullPullSha
 	pjs.BuildSpec.Source = &sourceSpec
+
 	if pullPullSha != "" {
 		pjs.BuildSpec.Source.Git.Revision = pullPullSha
 	} else {
@@ -365,17 +370,26 @@ func PartitionActive(pjs []kube.ProwJob) (pending, triggered chan kube.ProwJob) 
 		switch pj.Status.State {
 		case kube.PendingState:
 			pendingCount++
+		case kube.SuccessState:
+			pendingCount++
+		case kube.FailureState:
+			pendingCount++
 		case kube.TriggeredState:
 			triggeredCount++
 		}
 	}
 	pending = make(chan kube.ProwJob, pendingCount)
-	triggered = make(chan kube.ProwJob, triggeredCount)
 
+	triggered = make(chan kube.ProwJob, triggeredCount)
 	// Partition the jobs into the two separate channels.
 	for _, pj := range pjs {
 		switch pj.Status.State {
 		case kube.PendingState:
+			pending <- pj
+			// todo pretty sure this is bad and we should update success and failure elsewhere
+		case kube.SuccessState:
+			pending <- pj
+		case kube.FailureState:
 			pending <- pj
 		case kube.TriggeredState:
 			triggered <- pj

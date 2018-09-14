@@ -189,8 +189,8 @@ func (c *Controller) Sync() error {
 			k8sJobs = append(k8sJobs, pj)
 		}
 	}
-	pjs = k8sJobs
 
+	pjs = k8sJobs
 	var syncErrs []error
 	if err := c.terminateDupes(pjs, pm); err != nil {
 		syncErrs = append(syncErrs, err)
@@ -432,7 +432,6 @@ func (c *Controller) syncPendingJob(pj kube.ProwJob, pm map[string]kube.Pod, rep
 			return nil
 		}
 	}
-
 	pj.Status.URL = jobURL(c.ca.Config().Plank, pj, c.log)
 
 	reports <- pj
