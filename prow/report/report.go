@@ -53,11 +53,21 @@ func reportStatus(ghc GithubClient, pj kube.ProwJob, childDescription string) er
 		if contextState == kube.AbortedState {
 			contextState = kube.FailureState
 		}
+		// find a better way to do this, but using the current failed description fails GitHub validation as exceeds 140 chars
+		// example description:
+		// 'build step "build-step-unnamed-2" exited with code 2 (image: "docker-pullable://jenkinsxio/jenkins-go@sha256:9104890bc0fdbed7535bf707cabaf3ddcb512170f9298f0dbad715953847d0ce");
+		//      for logs run: kubectl -n jx logs d4865a2d-c68a-11e8-a85e-0a580a142233-fsmh6
+		//      -c build-step-unnamed-2'
+		description := pj.Status.Description
+		if len(description) > 140 && strings.IndexByte(description, '(') > 0{
+			description = description[:strings.IndexByte(description, '(')]
+		}
+
 		if err := ghc.CreateStatus(refs.Org, refs.Repo, refs.Pulls[0].SHA, github.Status{
 			// The state of the status. Can be one of error, failure, pending, or success.
 			// https://developer.github.com/v3/repos/statuses/#create-a-status
 			State:       string(contextState),
-			Description: pj.Status.Description,
+			Description: description,
 			Context:     pj.Spec.Context,
 			TargetURL:   pj.Status.URL,
 		}); err != nil {

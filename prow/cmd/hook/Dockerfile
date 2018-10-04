@@ -15,7 +15,7 @@
 FROM gcr.io/k8s-prow/git:0.1
 LABEL maintainer="spxtr@google.com"
 RUN apk add --update openssl && \
-  wget https://github.com/jenkins-x/jx/releases/download/v1.3.252/jx-linux-amd64.tar.gz && \
+  wget https://github.com/jenkins-x/jx/releases/download/v1.3.375/jx-linux-amd64.tar.gz && \
   tar xzf jx-linux-amd64.tar.gz && \
   rm -rf jx-linux-amd64.tar.gz
 COPY hook /hook

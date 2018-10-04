@@ -18,8 +18,7 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"time"
+		"time"
 
 	"github.com/sirupsen/logrus"
 
@@ -182,9 +181,12 @@ func (c *controller) clean() {
 	}
 
 	// Now clean up old pods.
-	selector := fmt.Sprintf("%s = %s", kube.CreatedByProw, "true")
+	//selector := fmt.Sprintf("%s = %s", kube.CreatedByProw, "true")
 	for _, client := range c.pkcs {
-		pods, err := client.ListPods(selector)
+
+		// hack: get all pods as knativie build pods dont have CreatedByProw=true label
+		// pods, err := client.ListPods(selector)
+		pods, err := client.ListPods("")
 		if err != nil {
 			c.logger.WithError(err).Error("Error listing pods.")
 			return

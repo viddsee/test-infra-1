@@ -371,9 +371,9 @@ func PartitionActive(pjs []kube.ProwJob) (pending, triggered chan kube.ProwJob) 
 		case kube.PendingState:
 			pendingCount++
 		case kube.SuccessState:
-			pendingCount++
+			triggeredCount++
 		case kube.FailureState:
-			pendingCount++
+			triggeredCount++
 		case kube.TriggeredState:
 			triggeredCount++
 		}
@@ -388,9 +388,9 @@ func PartitionActive(pjs []kube.ProwJob) (pending, triggered chan kube.ProwJob) 
 			pending <- pj
 			// todo pretty sure this is bad and we should update success and failure elsewhere
 		case kube.SuccessState:
-			pending <- pj
+			triggered <- pj
 		case kube.FailureState:
-			pending <- pj
+			triggered <- pj
 		case kube.TriggeredState:
 			triggered <- pj
 		}

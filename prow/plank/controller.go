@@ -434,7 +434,12 @@ func (c *Controller) syncPendingJob(pj kube.ProwJob, pm map[string]kube.Pod, rep
 	}
 	pj.Status.URL = jobURL(c.ca.Config().Plank, pj, c.log)
 
-	reports <- pj
+	// only report on state transitions?  My guess is we shouldn't even be in this function if there's been a
+	// previous failure for example.  Without this we see multiple failed status updates added to PRs
+	if pj.Status.PrevReportState != pj.Status.State {
+		reports <- pj
+		pj.Status.PrevReportState = pj.Status.State
+	}
 
 	if prevState != pj.Status.State {
 		c.log.WithFields(pjutil.ProwJobFields(&pj)).
@@ -450,11 +455,26 @@ func (c *Controller) syncTriggeredJob(pj kube.ProwJob, pm map[string]kube.Pod, r
 	prevState := pj.Status.State
 
 	var id, pn string
-	pod, podExists := pm[pj.ObjectMeta.Name]
+
 	// We may end up in a state where the pod exists but the prowjob is not
 	// updated to pending if we successfully create a new pod in a previous
 	// sync but the prowjob update fails. Simply ignore creating a new pod
 	// and rerun the prowjob update.
+	podExists := false
+	var pod kube.Pod
+	if pj.Spec.Agent == kube.BuildAgent {
+		for _, p := range pm {
+			// todo let's check this, it's because prow job name and knative build name differ slightly
+			bn, exist := p.Labels["build-name"]
+			if exist && bn == pj.Name {
+				podExists = true
+				pod = p
+				break
+			}
+		}
+	} else {
+		pod, podExists = pm[pj.ObjectMeta.Name]
+	}
 	if !podExists {
 		// Do not start more jobs than specified.
 		if !c.canExecuteConcurrently(&pj) {
@@ -477,7 +497,6 @@ func (c *Controller) syncTriggeredJob(pj kube.ProwJob, pm map[string]kube.Pod, r
 		id = getPodBuildID(&pod)
 		pn = pod.ObjectMeta.Name
 	}
-
 	if pj.Status.State == kube.TriggeredState {
 		// BuildID needs to be set before we execute the job url template.
 		pj.Status.BuildID = id
@@ -486,8 +505,16 @@ func (c *Controller) syncTriggeredJob(pj kube.ProwJob, pm map[string]kube.Pod, r
 		pj.Status.Description = "Job triggered."
 		pj.Status.URL = jobURL(c.ca.Config().Plank, pj, c.log)
 	}
-	reports <- pj
+
+	// only report on state transitions?  My guess is we shouldn't even be in this function if there's been a
+	// previous failure for example.  Without this we see multiple failed status updates added to PRs
+	if pj.Status.PrevReportState != pj.Status.State {
+		reports <- pj
+		pj.Status.PrevReportState = pj.Status.State
+	}
+
 	if prevState != pj.Status.State {
+
 		c.log.WithFields(pjutil.ProwJobFields(&pj)).
 			WithField("from", prevState).
 			WithField("to", pj.Status.State).Info("Transitioning states.")
@@ -530,6 +557,9 @@ func (c *Controller) getBuildID(name string) (string, error) {
 func getPodBuildID(pod *kube.Pod) string {
 	for _, env := range pod.Spec.Containers[0].Env {
 		if env.Name == "BUILD_NUMBER" {
+			return env.Value
+		}
+		if env.Name == "JX_BUILD_NUMBER" {
 			return env.Value
 		}
 	}
