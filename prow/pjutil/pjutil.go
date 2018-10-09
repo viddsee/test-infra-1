@@ -227,10 +227,12 @@ func PostsubmitSpec(p config.Postsubmit, refs kube.Refs) kube.ProwJobSpec {
 func interpolateEnvVars(pjs *kube.ProwJobSpec, refs kube.Refs) {
 	//todo lets clean this up
 	sourceURL := fmt.Sprintf("https://github.com/%s/%s.git", refs.Org, refs.Repo)
-	sourceSpec := buildv1alpha1.SourceSpec{
-		Git: &buildv1alpha1.GitSourceSpec{
+
+	if pjs.BuildSpec.Source == nil {
+		pjs.BuildSpec.Source = &buildv1alpha1.SourceSpec{}
+	}
+	pjs.BuildSpec.Source.Git =  &buildv1alpha1.GitSourceSpec{
 			Url: sourceURL,
-		},
 	}
 	// todo taken from downwardapi.JobSpec, lets clean up the duplication
 	env := map[string]string{
@@ -263,7 +265,6 @@ func interpolateEnvVars(pjs *kube.ProwJobSpec, refs kube.Refs) {
 	env[cloneURI] = refs.CloneURI
 	env[pullNumberEnv] = pullNumber
 	env[pullPullShaEnv] = pullPullSha
-	pjs.BuildSpec.Source = &sourceSpec
 
 	if pullPullSha != "" {
 		pjs.BuildSpec.Source.Git.Revision = pullPullSha
@@ -271,6 +272,19 @@ func interpolateEnvVars(pjs *kube.ProwJobSpec, refs kube.Refs) {
 		pjs.BuildSpec.Source.Git.Revision = refs.BaseSHA
 	}
 	env[jenkinsXBuildIDEnv] = getJenkinsXBuildNumber(refs.Org, refs.Repo, branchName)
+
+	if nil != pjs.BuildSpec.Template {
+		if len(pjs.BuildSpec.Template.Env) == 0 {
+			pjs.BuildSpec.Template.Env = []v1.EnvVar{}
+		}
+		for k, v := range env {
+			e := v1.EnvVar{
+				Name:  k,
+				Value: v,
+			}
+			pjs.BuildSpec.Template.Env = append(pjs.BuildSpec.Template.Env, e)
+		}
+	}
 
 	for i, step := range pjs.BuildSpec.Steps {
 		if len(step.Env) == 0 {
