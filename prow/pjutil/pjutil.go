@@ -21,17 +21,18 @@ import (
 	"path/filepath"
 	"strconv"
 
+	buildv1alpha1 "github.com/knative/build/pkg/apis/build/v1alpha1"
 	"github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
-	buildv1alpha1 "github.com/knative/build/pkg/apis/build/v1alpha1"
 
+	"fmt"
+
+	"k8s.io/api/core/v1"
 	"k8s.io/test-infra/prow/config"
 	"k8s.io/test-infra/prow/github"
 	"k8s.io/test-infra/prow/kube"
-	"k8s.io/api/core/v1"
-	"fmt"
 )
 
 const (
@@ -40,7 +41,6 @@ const (
 	orgLabel     = "prow.k8s.io/refs.org"
 	repoLabel    = "prow.k8s.io/refs.repo"
 	pullLabel    = "prow.k8s.io/refs.pull"
-
 
 	// JobSpecEnv is the name that contains JobSpec marshaled into a string.
 	JobSpecEnv = "JOB_SPEC"
@@ -60,12 +60,13 @@ const (
 	pullRefsEnv    = "PULL_REFS"
 	pullNumberEnv  = "PULL_NUMBER"
 	pullPullShaEnv = "PULL_PULL_SHA"
-	cloneURI 	   = "CLONE_URI"
+	cloneURI       = "CLONE_URI"
 
 	// todo lets come up with better const names
 	jmbrBranchName = "BRANCH_NAME"
 	jmbrSourceURL  = "SOURCE_URL"
 )
+
 // NewProwJob initializes a ProwJob out of a ProwJobSpec.
 func NewProwJob(spec kube.ProwJobSpec, labels map[string]string) kube.ProwJob {
 	allLabels := map[string]string{
@@ -183,18 +184,21 @@ func PresubmitSpec(p config.Presubmit, refs kube.Refs) kube.ProwJobSpec {
 
 func interpolateEnvVars(pjs *kube.ProwJobSpec, refs kube.Refs) {
 	//todo lets clean this up
-	sourceURL := fmt.Sprintf("https://github.com/%s/%s.git",refs.Org,refs.Repo)
-	sourceSpec := buildv1alpha1.SourceSpec{Git: &buildv1alpha1.GitSourceSpec{Url:sourceURL}}
+	sourceURL := fmt.Sprintf("https://github.com/%s/%s.git", refs.Org, refs.Repo)
+	if refs.CloneURI != "" {
+		sourceURL = refs.CloneURI
+	}
+	sourceSpec := buildv1alpha1.SourceSpec{Git: &buildv1alpha1.GitSourceSpec{Url: sourceURL}}
 
 	// todo taken from downwardapi.JobSpec, lets clean up the duplication
 	env := map[string]string{
-		jobNameEnv:   pjs.Job,
+		jobNameEnv: pjs.Job,
 		// TODO: figure out how to reliably get this even after pod restarts, we want the number to increase so maybe we
 		// TODO: need to think about using an external resource, kubernetes / git / some other to work out the next build #
 		//jmbrBuildNumber: "987654321",
 		//buildIDEnv:   buildID,
 		//prowJobIDEnv: spec.ProwJobID,
-		jobTypeEnv:   string(pjs.Type),
+		jobTypeEnv: string(pjs.Type),
 	}
 
 	branchName := ""
@@ -220,12 +224,12 @@ func interpolateEnvVars(pjs *kube.ProwJobSpec, refs kube.Refs) {
 	pjs.BuildSpec.Source.Git.Revision = refs.Pulls[0].SHA
 
 	for i, step := range pjs.BuildSpec.Steps {
-		if len(step.Env) == 0{
+		if len(step.Env) == 0 {
 			step.Env = []v1.EnvVar{}
 		}
 		for k, v := range env {
 			e := v1.EnvVar{
-				Name: k,
+				Name:  k,
 				Value: v,
 			}
 			pjs.BuildSpec.Steps[i].Env = append(pjs.BuildSpec.Steps[i].Env, e)
@@ -312,8 +316,7 @@ func BatchSpec(p config.Presubmit, refs kube.Refs) kube.ProwJobSpec {
 			pjs.Cluster = kube.DefaultClusterAlias
 		}
 
-		sourceSpec := buildv1alpha1.SourceSpec{Git: &buildv1alpha1.GitSourceSpec{Url:"https://github.com/" + refs.Org + "/" + refs.Repo + ".git"}}
-
+		sourceSpec := buildv1alpha1.SourceSpec{Git: &buildv1alpha1.GitSourceSpec{Url: "https://github.com/" + refs.Org + "/" + refs.Repo + ".git"}}
 
 		pjs.BuildSpec.Source = &sourceSpec
 
