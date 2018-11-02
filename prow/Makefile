@@ -21,7 +21,7 @@ ALPINE_VERSION           ?= 0.1
 GIT_VERSION              ?= 0.2
 
 # YYYYmmdd-commitish
-TAG := $(shell date -u +v%Y%m%d)-$(shell git describe --tags --always --dirty)
+TAG := $(shell date -u +v%Y%m%d)
 # HOOK_VERSION is the version of the hook image
 HOOK_VERSION              ?= $(TAG)
 # SINKER_VERSION is the version of the sinker image
@@ -60,13 +60,13 @@ CHECKCONFIG_VERSION       ?= $(TAG)
 CRIER_VERSION             ?= $(TAG)
 
 # These are the usual GKE variables.
-PROJECT       ?= k8s-prow
+PROJECT       ?= viddsee
 BUILD_PROJECT ?= k8s-prow-builds
 ZONE          ?= us-central1-f
 CLUSTER       ?= prow
 
 # Build and push specific variables.
-REGISTRY ?= gcr.io
+REGISTRY ?= index.docker.io
 PUSH     ?= docker push
 
 DOCKER_LABELS:=--label io.k8s.prow.git-describe="$(shell git describe --tags --always --dirty)"
@@ -278,3 +278,7 @@ crier-image: alpine-image
 	$(PUSH) "$(REGISTRY)/$(PROJECT)/crier:$(CRIER_VERSION)"
 
 .PHONY: crier-image
+
+image: deck-image hook-image horologium-image plank-image sinker-image splice-image tide-image
+
+.PHONY: image

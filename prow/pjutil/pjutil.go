@@ -229,7 +229,7 @@ func interpolateEnvVars(pjs *kube.ProwJobSpec, refs kube.Refs) {
 	//todo lets clean this up
 	sourceURL := fmt.Sprintf("https://github.com/%s/%s.git", refs.Org, refs.Repo)
 	if refs.CloneURI != "" {
-		sourceURL := refs.CloneURI
+		sourceURL = refs.CloneURI
 	}
 
 	if pjs.BuildSpec.Source == nil {
