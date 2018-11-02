@@ -33,9 +33,10 @@ import (
 	"k8s.io/test-infra/prow/github"
 	"k8s.io/test-infra/prow/kube"
 
-	buildv1alpha1 "github.com/knative/build/pkg/apis/build/v1alpha1"
 	"os/exec"
 	"strings"
+
+	buildv1alpha1 "github.com/knative/build/pkg/apis/build/v1alpha1"
 )
 
 const (
@@ -47,20 +48,20 @@ const (
 
 	// todo copied from prow/pod-utils/downwardapi/jobspec.go - let's figure out a better way tp reuse these consts
 	// JobSpecEnv is the name that contains JobSpec marshaled into a string.
-	JobSpecEnv        = "JOB_SPEC"
-	jobNameEnv        = "JOB_NAME"
-	jobTypeEnv        = "JOB_TYPE"
-	prowJobIDEnv      = "PROW_JOB_ID"
-	buildIDEnv        = "BUILD_ID"
-	jenkinsXBuildIDEnv    = "JX_BUILD_NUMBER"
-	repoOwnerEnv      = "REPO_OWNER"
-	repoNameEnv       = "REPO_NAME"
-	pullBaseRefEnv    = "PULL_BASE_REF"
-	pullBaseShaEnv    = "PULL_BASE_SHA"
-	pullRefsEnv       = "PULL_REFS"
-	pullNumberEnv     = "PULL_NUMBER"
-	pullPullShaEnv    = "PULL_PULL_SHA"
-	cloneURI          = "CLONE_URI"
+	JobSpecEnv         = "JOB_SPEC"
+	jobNameEnv         = "JOB_NAME"
+	jobTypeEnv         = "JOB_TYPE"
+	prowJobIDEnv       = "PROW_JOB_ID"
+	buildIDEnv         = "BUILD_ID"
+	jenkinsXBuildIDEnv = "JX_BUILD_NUMBER"
+	repoOwnerEnv       = "REPO_OWNER"
+	repoNameEnv        = "REPO_NAME"
+	pullBaseRefEnv     = "PULL_BASE_REF"
+	pullBaseShaEnv     = "PULL_BASE_SHA"
+	pullRefsEnv        = "PULL_REFS"
+	pullNumberEnv      = "PULL_NUMBER"
+	pullPullShaEnv     = "PULL_PULL_SHA"
+	cloneURI           = "CLONE_URI"
 	// todo lets come up with better const names
 	jmbrBranchName = "BRANCH_NAME"
 	jmbrSourceURL  = "SOURCE_URL"
@@ -227,12 +228,15 @@ func PostsubmitSpec(p config.Postsubmit, refs kube.Refs) kube.ProwJobSpec {
 func interpolateEnvVars(pjs *kube.ProwJobSpec, refs kube.Refs) {
 	//todo lets clean this up
 	sourceURL := fmt.Sprintf("https://github.com/%s/%s.git", refs.Org, refs.Repo)
+	if refs.CloneURI != "" {
+		sourceURL := refs.CloneURI
+	}
 
 	if pjs.BuildSpec.Source == nil {
 		pjs.BuildSpec.Source = &buildv1alpha1.SourceSpec{}
 	}
-	pjs.BuildSpec.Source.Git =  &buildv1alpha1.GitSourceSpec{
-			Url: sourceURL,
+	pjs.BuildSpec.Source.Git = &buildv1alpha1.GitSourceSpec{
+		Url: sourceURL,
 	}
 	// todo taken from downwardapi.JobSpec, lets clean up the duplication
 	env := map[string]string{
